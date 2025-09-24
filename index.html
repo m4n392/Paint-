@@ -1,37 +1,626 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.10/lib/p5.min.js"></script>
+    <title>Dibujo Sonoro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+        
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            background: 
+                linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%),
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,0,0.03) 2px, rgba(0,255,0,0.03) 4px);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #e0e0e0;
+        }
+
+        h1 {
+            color: #00ff41;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .controls {
+            background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
+            border: 2px solid #333;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 
+                inset 0 1px 0 rgba(255,255,255,0.1),
+                0 4px 8px rgba(0,0,0,0.3),
+                0 1px 2px rgba(0,0,0,0.2);
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+            position: relative;
+        }
+
+        .controls::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 15px;
+            right: 15px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #555, transparent);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+        }
+
+        button {
+            background: linear-gradient(145deg, #4a4a4a, #3a3a3a);
+            color: #e0e0e0;
+            border: 1px solid #555;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            box-shadow: 
+                inset 0 1px 0 rgba(255,255,255,0.1),
+                0 2px 4px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            background: linear-gradient(145deg, #5a5a5a, #4a4a4a);
+            border-color: #00ff41;
+            color: #00ff41;
+            box-shadow: 
+                inset 0 1px 0 rgba(255,255,255,0.1),
+                0 2px 8px rgba(0,0,0,0.3),
+                0 0 12px rgba(0,255,65,0.2);
+        }
+
+        button:active {
+            background: linear-gradient(145deg, #3a3a3a, #2a2a2a);
+            transform: translateY(1px);
+            box-shadow: 
+                inset 0 1px 3px rgba(0,0,0,0.3),
+                0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        select {
+            padding: 10px 12px;
+            border-radius: 4px;
+            border: 1px solid #555;
+            background: linear-gradient(145deg, #3a3a3a, #2a2a2a);
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            font-size: 12px;
+            box-shadow: 
+                inset 0 1px 3px rgba(0,0,0,0.2),
+                0 1px 0 rgba(255,255,255,0.1);
+            min-width: 140px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #00ff41;
+            box-shadow: 
+                inset 0 1px 3px rgba(0,0,0,0.2),
+                0 0 8px rgba(0,255,65,0.3);
+        }
+
+        input[type="range"] {
+            width: 120px;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            border: 1px solid #333;
+            outline: none;
+            -webkit-appearance: none;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 2px;
+            background: linear-gradient(145deg, #5a5a5a, #4a4a4a);
+            border: 1px solid #666;
+            cursor: pointer;
+            box-shadow: 
+                0 1px 3px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: linear-gradient(145deg, #6a6a6a, #5a5a5a);
+            border-color: #00ff41;
+            box-shadow: 
+                0 1px 5px rgba(0,0,0,0.4),
+                0 0 8px rgba(0,255,65,0.2);
+        }
+
+        label {
+            font-weight: 500;
+            color: #b0b0b0;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .canvas-container {
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 
+                inset 0 2px 4px rgba(0,0,0,0.4),
+                0 1px 0 rgba(255,255,255,0.1);
+            background: #0f0f0f;
+            border: 1px solid #333;
+            position: relative;
+        }
+
+        .canvas-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                #333 0%, 
+                #00ff41 25%, 
+                #ff4444 50%, 
+                #4444ff 75%, 
+                #333 100%);
+            z-index: 10;
+            opacity: 0.6;
+        }
+
+        .canvas-container::after {
+            content: 'WAVEFORM DISPLAY';
+            position: absolute;
+            top: 5px;
+            left: 10px;
+            font-size: 9px;
+            color: #666;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            letter-spacing: 1px;
+            z-index: 10;
+        }
+
+        .instructions {
+            background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
+            border: 1px solid #333;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 25px;
+            max-width: 700px;
+            text-align: left;
+            box-shadow: 
+                inset 0 1px 0 rgba(255,255,255,0.05),
+                0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .instructions h3 {
+            color: #00ff41;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+        }
+
+        .instructions p {
+            color: #c0c0c0;
+            font-weight: 400;
+            margin: 8px 0;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .color-palette {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .color-option {
+            width: 24px;
+            height: 24px;
+            border-radius: 3px;
+            border: 1px solid #555;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 
+                inset 0 1px 0 rgba(255,255,255,0.1),
+                0 1px 3px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .color-option:hover {
+            transform: translateY(-1px);
+            border-color: #777;
+            box-shadow: 
+                inset 0 1px 0 rgba(255,255,255,0.2),
+                0 2px 6px rgba(0,0,0,0.4);
+        }
+
+        .color-option.active {
+            border-color: #00ff41;
+            box-shadow: 
+                inset 0 1px 0 rgba(255,255,255,0.2),
+                0 2px 8px rgba(0,0,0,0.4),
+                0 0 12px rgba(0,255,65,0.3);
+        }
+
+        .color-option.active::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border: 1px solid #00ff41;
+            border-radius: 4px;
+            box-shadow: 0 0 8px rgba(0,255,65,0.2);
+        }
+
+        /* VU Meter style indicator */
+        .vu-meter {
+            display: flex;
+            gap: 2px;
+            align-items: flex-end;
+            height: 20px;
+            margin-top: 5px;
+        }
+
+        .vu-bar {
+            width: 3px;
+            background: #333;
+            border-radius: 1px;
+            transition: all 0.1s ease;
+        }
+    </style>
 </head>
 <body>
-    <h1>Mi Paint</h1>
+    <h1>SOUND MIXER STUDIO</h1>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label>Género:</label>
+            <select id="genreSelect">
+                <option value="electronic">Electronic</option>
+                <option value="jazz">Jazz</option>
+                <option value="ambient">Ambient</option>
+                <option value="hiphop">Hip Hop</option>
+                <option value="rock">Rock</option>
+                <option value="classical">Classical</option>
+            </select>
+        </div>
+        
+        <div class="control-group">
+            <label>Canal:</label>
+            <select id="channelSelect">
+                <option value="lead">Lead</option>
+                <option value="bass">Bass</option>
+                <option value="pad">Pad</option>
+                <option value="perc">Perc</option>
+                <option value="fx">FX</option>
+            </select>
+        </div>
+        
+        <div class="control-group">
+            <label>Gain:</label>
+            <input type="range" id="volumeSlider" min="0" max="100" value="50">
+            <div class="vu-meter">
+                <div class="vu-bar" style="height: 30%"></div>
+                <div class="vu-bar" style="height: 50%"></div>
+                <div class="vu-bar" style="height: 70%"></div>
+                <div class="vu-bar" style="height: 40%"></div>
+                <div class="vu-bar" style="height: 20%"></div>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <label>Brush Size:</label>
+            <input type="range" id="brushSize" min="3" max="30" value="8">
+        </div>
+        
+        <div class="control-group">
+            <label>Track Color:</label>
+            <div class="color-palette">
+                <div class="color-option active" style="background-color: #00ff41" data-color="#00ff41"></div>
+                <div class="color-option" style="background-color: #ff4444" data-color="#ff4444"></div>
+                <div class="color-option" style="background-color: #4444ff" data-color="#4444ff"></div>
+                <div class="color-option" style="background-color: #ffff44" data-color="#ffff44"></div>
+                <div class="color-option" style="background-color: #ff44ff" data-color="#ff44ff"></div>
+                <div class="color-option" style="background-color: #44ffff" data-color="#44ffff"></div>
+                <div class="color-option" style="background-color: #ffffff" data-color="#ffffff"></div>
+            </div>
+        </div>
+        
+        <button onclick="clearCanvas()">CLEAR</button>
+        <button onclick="toggleSound()" id="soundButton">AUDIO: ON</button>
+        <button onclick="toggleRecord()" id="recordButton">REC</button>
+    </div>
+    
+    <div class="canvas-container" id="canvasContainer"></div>
+    
+    <div class="instructions">
+        <h3>¿Cómo usar?</h3>
+        <p>• <strong>Dibuja</strong> con el mouse o toque en el canvas</p>
+        <p>• Cada trazo genera sonidos basados en la <strong>posición</strong> y <strong>velocidad</strong></p>
+        <p>• Cambia el <strong>instrumento</strong> para diferentes tipos de sonido</p>
+        <p>• La posición <strong>horizontal</strong> controla el tono, la <strong>vertical</strong> controla efectos</p>
+        <p>• ¡Experimenta con diferentes colores y tamaños de pincel!</p>
+    </div>
 
     <script>
-        let nombreMaria = "Maria";
-        let nombreJuan = "Juan";
-        let edadMaria = 20    ;
-        let edadJuan = 25;
-        let edadTotal = 0;
-        let esMayorDeEdad;
-        console.log(edadTotal)
-        console.log(nombreMaria + " tiene " + edadMaria + " años.")
-        console.log(nombreJuan + " tiene " + edadJuan + " años.")
-        calcularEdad = () => {
-            //edad += 1;
-            if (edadMaria >= 18) {
-                esMayorDeEdad = true;
+        // Variables globales
+        let currentGenre = 'electronic';
+        let currentChannel = 'lead';
+        let instruments = {};
+        let soundEnabled = true;
+        let isRecording = false;
+        let currentColor = '#00ff41';
+        let brushSize = 8;
+        let prevMouseX = 0;
+        let prevMouseY = 0;
+        let volume = -20;
+        
+        // Configuraciones de géneros
+        const genreConfigs = {
+            electronic: {
+                lead: { type: 'synth', wave: 'sawtooth', attack: 0.1, decay: 0.2, sustain: 0.3, release: 0.5 },
+                bass: { type: 'bass', wave: 'sine', attack: 0.05, decay: 0.3, sustain: 0.7, release: 0.8 },
+                pad: { type: 'pad', wave: 'triangle', attack: 0.5, decay: 0.1, sustain: 0.8, release: 1.0 },
+                perc: { type: 'drum', wave: 'noise', attack: 0.01, decay: 0.1, sustain: 0.0, release: 0.2 },
+                fx: { type: 'fx', wave: 'square', attack: 0.1, decay: 0.5, sustain: 0.2, release: 2.0 }
+            },
+            jazz: {
+                lead: { type: 'piano', wave: 'sine', attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.8 },
+                bass: { type: 'upright', wave: 'triangle', attack: 0.1, decay: 0.2, sustain: 0.5, release: 1.0 },
+                pad: { type: 'strings', wave: 'sawtooth', attack: 0.8, decay: 0.1, sustain: 0.9, release: 1.5 },
+                perc: { type: 'brush', wave: 'noise', attack: 0.05, decay: 0.3, sustain: 0.1, release: 0.5 },
+                fx: { type: 'brass', wave: 'square', attack: 0.2, decay: 0.3, sustain: 0.4, release: 1.0 }
+            },
+            ambient: {
+                lead: { type: 'ethereal', wave: 'sine', attack: 1.0, decay: 0.5, sustain: 0.8, release: 3.0 },
+                bass: { type: 'sub', wave: 'sine', attack: 0.5, decay: 1.0, sustain: 0.9, release: 2.0 },
+                pad: { type: 'atmosphere', wave: 'triangle', attack: 2.0, decay: 0.1, sustain: 0.9, release: 4.0 },
+                perc: { type: 'texture', wave: 'noise', attack: 0.5, decay: 2.0, sustain: 0.3, release: 3.0 },
+                fx: { type: 'space', wave: 'sawtooth', attack: 1.5, decay: 1.0, sustain: 0.5, release: 5.0 }
+            },
+            hiphop: {
+                lead: { type: 'melody', wave: 'square', attack: 0.05, decay: 0.1, sustain: 0.4, release: 0.3 },
+                bass: { type: '808', wave: 'sine', attack: 0.01, decay: 0.5, sustain: 0.2, release: 0.8 },
+                pad: { type: 'sample', wave: 'sawtooth', attack: 0.1, decay: 0.2, sustain: 0.6, release: 0.5 },
+                perc: { type: 'trap', wave: 'noise', attack: 0.01, decay: 0.05, sustain: 0.0, release: 0.1 },
+                fx: { type: 'scratch', wave: 'square', attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.3 }
+            },
+            rock: {
+                lead: { type: 'guitar', wave: 'sawtooth', attack: 0.05, decay: 0.1, sustain: 0.7, release: 0.5 },
+                bass: { type: 'electric', wave: 'square', attack: 0.02, decay: 0.1, sustain: 0.8, release: 0.4 },
+                pad: { type: 'organ', wave: 'triangle', attack: 0.1, decay: 0.1, sustain: 0.9, release: 0.8 },
+                perc: { type: 'kit', wave: 'noise', attack: 0.01, decay: 0.1, sustain: 0.0, release: 0.3 },
+                fx: { type: 'distortion', wave: 'sawtooth', attack: 0.1, decay: 0.3, sustain: 0.5, release: 1.0 }
+            },
+            classical: {
+                lead: { type: 'violin', wave: 'sawtooth', attack: 0.3, decay: 0.1, sustain: 0.8, release: 1.2 },
+                bass: { type: 'cello', wave: 'triangle', attack: 0.2, decay: 0.2, sustain: 0.9, release: 1.5 },
+                pad: { type: 'choir', wave: 'sine', attack: 0.8, decay: 0.1, sustain: 0.9, release: 2.0 },
+                perc: { type: 'timpani', wave: 'sine', attack: 0.01, decay: 0.5, sustain: 0.3, release: 2.0 },
+                fx: { type: 'harp', wave: 'triangle', attack: 0.01, decay: 1.0, sustain: 0.2, release: 3.0 }
             }
-            edadTotal = edadJuan + edadMaria;
+        };
+        
+        // Inicializar Tone.js
+        async function initAudio() {
+            if (Tone.context.state !== 'running') {
+                await Tone.start();
+            }
             
-        }  
-    
-        calcularEdad();
-        console.log(edadTotal);
-        console.log(esMayorDeEdad);
+            // Crear instrumentos basados en configuraciones
+            createInstruments();
+            Tone.getDestination().volume.value = volume;
+        }
+        
+        function createInstruments() {
+            instruments = {};
+            Object.keys(genreConfigs).forEach(genre => {
+                instruments[genre] = {};
+                Object.keys(genreConfigs[genre]).forEach(channel => {
+                    const config = genreConfigs[genre][channel];
+                    
+                    if (channel === 'perc') {
+                        instruments[genre][channel] = new Tone.NoiseSynth({
+                            noise: { type: 'white' },
+                            envelope: config
+                        }).toDestination();
+                    } else {
+                        instruments[genre][channel] = new Tone.Synth({
+                            oscillator: { type: config.wave },
+                            envelope: config
+                        }).toDestination();
+                    }
+                });
+            });
+        }
+        
+        function setup() {
+            let canvas = createCanvas(800, 600);
+            canvas.parent('canvasContainer');
+            background(255);
+            
+            // Inicializar audio
+            initAudio();
+            
+            // Configurar eventos de color
+            setupColorPalette();
+        }
+        
+        function draw() {
+            // No hay animación continua, solo dibujamos cuando el usuario interactúa
+        }
+        
+        function mouseDragged() {
+            if (mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height) {
+                // Calcular velocidad del mouse
+                let speed = dist(mouseX, mouseY, prevMouseX, prevMouseY);
+                
+                // Dibujar
+                stroke(currentColor);
+                strokeWeight(brushSize);
+                strokeCap(ROUND);
+                line(mouseX, mouseY, prevMouseX, prevMouseY);
+                
+                // Generar sonido si está habilitado
+                if (soundEnabled && speed > 2) { // Solo si hay movimiento suficiente
+                    playSound(mouseX, mouseY, speed);
+                }
+                
+                prevMouseX = mouseX;
+                prevMouseY = mouseY;
+            }
+        }
+        
+        function mousePressed() {
+            if (mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height) {
+                prevMouseX = mouseX;
+                prevMouseY = mouseY;
+                
+                // Reproducir sonido inicial
+                if (soundEnabled) {
+                    playSound(mouseX, mouseY, 10);
+                }
+            }
+        }
+        
+        function playSound(x, y, speed) {
+            if (Tone.context.state !== 'running') {
+                initAudio();
+                return;
+            }
+            
+            const currentInstrument = instruments[currentGenre][currentChannel];
+            if (!currentInstrument) return;
+            
+            // Mapear posición a parámetros según el canal
+            let frequency, duration;
+            
+            switch(currentChannel) {
+                case 'lead':
+                    frequency = map(x, 0, width, 200, 1000);
+                    duration = map(speed, 0, 50, 0.1, 0.8);
+                    break;
+                case 'bass':
+                    frequency = map(x, 0, width, 40, 200);
+                    duration = map(speed, 0, 50, 0.2, 1.0);
+                    break;
+                case 'pad':
+                    frequency = map(x, 0, width, 100, 600);
+                    duration = map(speed, 0, 50, 0.5, 2.0);
+                    break;
+                case 'perc':
+                    // Para percusión, usar posición Y para filtro
+                    currentInstrument.triggerAttackRelease(map(speed, 0, 50, 0.05, 0.3));
+                    return;
+                case 'fx':
+                    frequency = map(x, 0, width, 80, 1500);
+                    duration = map(speed, 0, 50, 0.3, 1.5);
+                    break;
+            }
+            
+            try {
+                if (currentChannel !== 'perc') {
+                    currentInstrument.triggerAttackRelease(frequency, duration);
+                }
+            } catch (error) {
+                console.log('Error reproduciendo sonido:', error);
+            }
+        }
+        
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const button = document.getElementById('soundButton');
+            button.textContent = soundEnabled ? 'AUDIO: ON' : 'AUDIO: OFF';
+            button.style.background = soundEnabled ? 
+                'linear-gradient(145deg, #4a4a4a, #3a3a3a)' : 
+                'linear-gradient(145deg, #666, #555)';
+        }
+        
+        function toggleRecord() {
+            isRecording = !isRecording;
+            const button = document.getElementById('recordButton');
+            button.textContent = isRecording ? 'STOP' : 'REC';
+            button.style.background = isRecording ? 
+                'linear-gradient(145deg, #ff4444, #cc3333)' : 
+                'linear-gradient(145deg, #4a4a4a, #3a3a3a)';
+        }
+        
+        // Event listeners para controles
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('genreSelect').addEventListener('change', function() {
+                currentGenre = this.value;
+            });
+            
+            document.getElementById('channelSelect').addEventListener('change', function() {
+                currentChannel = this.value;
+            });
+            
+            document.getElementById('volumeSlider').addEventListener('input', function() {
+                volume = map(parseInt(this.value), 0, 100, -40, 0);
+                if (Tone.getDestination()) {
+                    Tone.getDestination().volume.value = volume;
+                }
+            });
+            
+            document.getElementById('brushSize').addEventListener('input', function() {
+                brushSize = parseInt(this.value);
+            });
+        });
+        
+        // Función auxiliar para mapear valores
+        function map(value, start1, stop1, start2, stop2) {
+            return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
+        }
     </script>
-    
 </body>
 </html>
